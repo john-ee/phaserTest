@@ -18,29 +18,31 @@ var game = new Phaser.Game(500, 500, Phaser.AUTO, '', { preload: preload, create
 
 function preload() {
 	game.load.image('background', 'assets/background.png');
-	//game.load.spritesheet('fighter', 'assets/link.gif', 30, 32)
-	//game.load.spritesheet('fighter', 'assets/3232LttPLink1.png', 32, 32)
-	//game.load.spritesheet('fighter', 'assets/character.png', 16, 32)
 	game.load.spritesheet('fighter', 'assets/Clive2.png', 24, 32);
-	//game.load.spritesheet('fighter', 'assets/aLttP.png', 32, 32);
 }
 
 var player;
 var cursors;
 const default_position = 19;
-var direction;
+var direction = 'down';
 var velocity = 100;
 var left = 28;
 var right = 10;
 var up = 1;
 var down = 19;
+var hit_up;
+var hit_down;
+var hit_left;
+var hit_right;
+var hit;
+var attack_time = 0;
 
 function create() {
 	game.physics.startSystem(Phaser.Physics.ARCADE);
 	game.add.sprite(0, 0, 'background');
 
 	// The player and its settings
-	player = game.add.sprite(game.world.width/2, game.world.height/2, 'fighter', default_position);
+	player = game.add.sprite(game.world.width/2, game.world.height/2, 'fighter', down);
 	//  We need to enable physics on the player
 	game.physics.arcade.enable(player);
 	player.body.collideWorldBounds = true; //
@@ -51,14 +53,35 @@ function create() {
 	player.animations.add('up', [0, 2], 10, true);
 	player.animations.add('down', [18, 20], 10, true);
 
+	player.animations.add('f_left', [30, 31, 32], 10, false);
+	player.animations.add('f_right', [12, 13, 14], 10, false);
+	player.animations.add('f_up', [3, 4, 5], 10, false);
+	player.animations.add('f_down', [21, 22, 23], 10, false);
+
 	//  Our controls.
 	cursors = game.input.keyboard.createCursorKeys();
+	hit_up = game.input.keyboard.addKey(Phaser.Keyboard.Z);
+	hit_down = game.input.keyboard.addKey(Phaser.Keyboard.S);
+	hit_left = game.input.keyboard.addKey(Phaser.Keyboard.Q);
+	hit_right = game.input.keyboard.addKey(Phaser.Keyboard.D);
+	hit = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 }
 
 function update() {
+
+	animate(player);
+	//fight(player);
+
+}
+
+function animate(player) {
 	//  Reset the players velocity (movement)
 	player.body.velocity.x = 0; //
 	player.body.velocity.y = 0;
+
+	if (hit.isDown) {
+		attack(player, direction)
+	}
 
 	if (cursors.left.isDown)
 	{
@@ -88,8 +111,9 @@ function update() {
 		player.animations.play('down');
 		direction = 'down';
 	}
-
-	if(!cursors.left.isDown && !cursors.right.isDown && !cursors.up.isDown && !cursors.down.isDown)
+	//if(!cursors.left.isDown && !cursors.right.isDown && !cursors.up.isDown && !cursors.down.isDown && !hit.isDown)
+	if (player.animations.currentAnim.isFinished)
+	//if(isIdle(cursors) && isAttacking(player))
 	{
 		//  Stand still
 		player.animations.stop();
@@ -105,6 +129,48 @@ function update() {
 		else if (direction == 'down') {
 			player.frame = down;
 		}
+	}
+}
+
+function attack(player, direction) {
+		if (direction == 'left') {
+			player.animations.play('f_left');
+		}
+		else if (direction == 'right') {
+			player.animations.play('f_right');
+		}
+		else if (direction == 'up') {
+			player.animations.play('f_up');
+		}
+		else if (direction == 'down') {
+			player.animations.play('f_down');
+		}
+}
+
+function isAttacking(player) {
+	if (player.animations.play('f_left').isPlaying) {
+		return true;
+	}
+	else if (player.animations.play('f_right').isPlaying) {
+		return true;
+	}
+	else if (player.animations.play('f_up').isPlaying) {
+		return true;
+	}
+	else if (player.animations.play('f_down').isPlaying) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+function isIdle(cursors) {
+	if (cursors.left.isDown || cursors.right.isDown || cursors.up.isDown || cursors.down.isDown) {
+		return true;
+	}
+	else {
+		return false;
 	}
 }
 
