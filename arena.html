@@ -14,19 +14,24 @@
 
 <script type="text/javascript">
 
-var game = new Phaser.Game(500, 500, Phaser.AUTO, '', { preload: preload, create: create, update: update });
-
-function preload() {
-	game.load.image('background', 'assets/background.png');
-	game.load.spritesheet('fighter', 'assets/Clive2.png', 24, 32);
-}
-
 const default_position = 19;
 const velocity = 100;
 const left = 28;
 const right = 10;
 const up = 1;
 const down = 19;
+const frame_w = 24;
+const frame_h = 32;
+const body_w = 10;
+const body_h = 16;
+
+var game = new Phaser.Game(500, 500, Phaser.AUTO, '', { preload: preload, create: create, update: update , render: render});
+
+function preload() {
+	game.load.image('background', 'assets/background.png');
+	game.load.spritesheet('fighter', 'assets/Clive2.png', frame_w, frame_h);
+	//game.load.image('energy_ball', 'assets/energy-bullet.png');
+}
 
 var player1;
 var cursors1;
@@ -43,7 +48,7 @@ function create() {
 	game.add.sprite(0, 0, 'background');
 
 	// The player 1 and its settings
-	player1 = game.add.sprite(game.world.width/4, game.world.height/4, 'fighter', down);
+	player1 = game.add.sprite(game.world.width * 0.25, game.world.height * 0.25, 'fighter', down);
 	//  We need to enable physics on the player
 	game.physics.arcade.enable(player1);
 	player1.body.collideWorldBounds = true; //
@@ -65,6 +70,33 @@ function create() {
 	};
 	hit1 = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 	direction1 = 'down';
+	// Change body size for battle
+	player1.body.setSize(body_w, body_h);
+	// create a group for all the player's hitboxe
+	hitboxes1 = game.add.group();
+	// give all the hitboxes a physics body
+	hitboxes1.enableBody = true;
+	// make the hitboxes children of the player. They will now move with the player
+	player1.addChild(hitboxes1);
+	// create a "hitbox" (really just an empty sprite with a physics body)
+  var hitbox11 = hitboxes1.create(0,0,null);
+	// set the size of the hitbox, and its position relative to the player
+  hitbox11.body.setSize(50, 50, 10, 10);
+	// add some properties to the hitbox. These can be accessed later for use in calculations
+  hitbox11.name = "slash_left";
+  hitbox11.damage = 50;
+  hitbox11.knockbackDirection = - 0.5;
+  hitbox11.knockbackAmt = 600;
+
+	var hitbox12 = hitboxes1.create(0,0,null);
+	// set the size of the hitbox, and its position relative to the player
+  hitbox12.body.setSize(50, 50, 10, 10);
+	// add some properties to the hitbox. These can be accessed later for use in calculations
+  hitbox12.name = "slash_right";
+  hitbox12.damage = 50;
+  hitbox12.knockbackDirection = - 0.5;
+  hitbox12.knockbackAmt = 600;
+
 
 	// The player 1 and its settings
 	player2 = game.add.sprite(game.world.width * 0.75, game.world.height * 0.75, 'fighter', down);
@@ -84,24 +116,47 @@ function create() {
 	cursors2 = game.input.keyboard.createCursorKeys();
 	hit2 = game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
 	direction2 = 'down';
+	// Change body size for battle
+	player2.body.setSize(10,16);
+	// create a group for all the player's hitboxe
+	hitboxes2 = game.add.group();
+	// give all the hitboxes a physics body
+	hitboxes2.enableBody = true;
+	// make the hitboxes children of the player. They will now move with the player
+	player2.addChild(hitboxes2);
+	// create a "hitbox" (really just an empty sprite with a physics body)
+  var hitbox21 = hitboxes2.create(0,0,null);
+	// set the size of the hitbox, and its position relative to the player
+  hitbox21.body.setSize(frame_w, frame_h, 0, 0);
+	// add some properties to the hitbox. These can be accessed later for use in calculations
+  hitbox21.name = "slash_left";
+  hitbox21.damage = 50;
+  hitbox21.knockbackDirection = - 0.5;
+  hitbox21.knockbackAmt = 600;
 }
 
 function update() {
 	game.physics.arcade.collide(player1, player2);
-	direction1 = animate(player1, cursors1, hit1, direction1);
-	direction2 = animate(player2, cursors2, hit2, direction2);
-	//fight(player);
 
+	game.physics.arcade.overlap(player2, hitboxes1, knockback, null, this);
+
+	direction1 = animate(player1, cursors1, hit1, direction1, hitboxes1);
+	direction2 = animate(player2, cursors2, hit2, direction2, hitboxes2);
+
+	disableAllHitboxes(hitboxes1);
+	disableAllHitboxes(hitboxes2);
+
+	this.game.debug.spriteInfo(player1, 0, 250, "black");
 }
 
-function animate(player, cursors, hit, direction) {
+function render() {
+    this.game.debug.text(`Debugging Phaser ${Phaser.VERSION}`, 20, 20, 'red', 'Segoe UI');
+}
+
+function animate(player, cursors, hit, direction, hitboxes) {
 	//  Reset the players velocity (movement)
 	player.body.velocity.x = 0; //
 	player.body.velocity.y = 0;
-
-	if (hit.isDown) {
-		attack(player, direction)
-	}
 
 	if (cursors.left.isDown)
 	{
@@ -131,9 +186,15 @@ function animate(player, cursors, hit, direction) {
 		player.animations.play('down');
 		direction = 'down';
 	}
+
+	if (hit.isDown) {
+		attack(player, direction, hitboxes);
+	}
+
 	//if(!cursors.left.isDown && !cursors.right.isDown && !cursors.up.isDown && !cursors.down.isDown && !hit.isDown)
 	if (player.animations.currentAnim.isFinished)
 	//if(isIdle(cursors) && isAttacking(player))
+	//if (isIdle(cursors, hit))
 	{
 		//  Stand still
 		player.animations.stop();
@@ -150,22 +211,32 @@ function animate(player, cursors, hit, direction) {
 			player.frame = down;
 		}
 	}
+	//disableAllHitboxes(hitboxes);
 	return direction;
 }
 
-function attack(player, direction) {
-		if (direction == 'left') {
-			player.animations.play('f_left');
-		}
-		else if (direction == 'right') {
-			player.animations.play('f_right');
-		}
-		else if (direction == 'up') {
-			player.animations.play('f_up');
-		}
-		else /*if (direction == 'down')*/ {
-			player.animations.play('f_down');
-		}
+function attack(player, direction, hitboxes) {
+	if (direction == 'left') {
+		player.animations.play('f_left');
+		enableHitbox(player, hitboxes, "slash_left");
+		//hitbox11.reset(0,0)
+	}
+	else if (direction == 'right') {
+		player.animations.play('f_right');
+		enableHitbox(player, hitboxes, "slash_right");
+	}
+	else if (direction == 'up') {
+		player.animations.play('f_up');
+	}
+	else /*if (direction == 'down')*/ {
+		player.animations.play('f_down');
+	}
+	this.game.debug.start(20, 20, 'blue');
+	this.game.debug.line();
+	this.game.debug.line();
+	this.game.debug.line('Attacking');
+	//this.game.debug.spriteInfo(hitboxes, 32, 32);
+	this.game.debug.stop();
 }
 
 function isAttacking(player) {
@@ -186,13 +257,51 @@ function isAttacking(player) {
 	}
 }
 
-function isIdle(cursors) {
-	if (cursors.left.isDown || cursors.right.isDown || cursors.up.isDown || cursors.down.isDown) {
+function isIdle(player, cursors, hit) {
+	if (cursors.left.isDown || cursors.right.isDown || cursors.up.isDown || cursors.down.isDown || isAttacking(player)) {
 		return true;
 	}
 	else {
-		return false;
+		return true;
 	}
+}
+
+function enableHitbox(hitboxes, hitboxName)
+{
+  // search all the hitboxes
+	var box;
+  for(var i = 0; i < hitboxes.children.length; i++){
+    // if we find the hitbox with the "name" specified
+    if(hitboxes.children[i].name === hitboxName){
+      // reset it
+      hitboxes.children[i].reset(player.body.x,player.body.y);
+			box = hitboxes.children[i];
+    }
+  }
+	this.game.debug.start(20, 20, 'blue');
+	this.game.debug.line();
+	this.game.debug.line('Enabling HitBox');
+	this.game.debug.spriteInfo(box, 0, 64);
+	this.game.debug.stop();
+}
+
+// disable all active hitboxes
+function disableAllHitboxes(hitboxes)
+{
+  hitboxes.forEachExists(function(hitbox) {
+    hitbox.kill();
+  });
+}
+
+function knockback(player, hitboxes)
+{
+	player.kill();
+	this.game.debug.start(20, 20, 'blue');
+	this.game.debug.line();
+	this.game.debug.line();
+	this.game.debug.line();
+	this.game.debug.line('Overlap');
+	this.game.debug.stop();
 }
 
 </script>

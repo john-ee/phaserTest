@@ -16,7 +16,6 @@ Player.prototype.create = function (inputType) {
     this.player = game.add.sprite(game.world.width/2, game.world.height/2, 'fighter', default_position);
     game.physics.enable(this.player);
 
-
     this.player.animations.add('left', [27, 29], 10, true);
   	this.player.animations.add('right', [9, 11], 10, true);
   	this.player.animations.add('up', [0, 2], 10, true);

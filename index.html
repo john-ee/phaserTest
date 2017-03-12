@@ -24,8 +24,7 @@ var up = 1;
 var down = 19;
 
 function Player(game){
-    this.game = game;
-    this.sprite = null;
+    Phaser.Sprite.call(this, game.world.width/2, game.world.height/2, 'fighter', default_position);
 }
 
 Player.prototype.create = function () {
@@ -39,7 +38,6 @@ Player.prototype.create = function () {
   	this.player.animations.add('down', [18, 20], 10, true);
 
     cursors = this.game.input.keyboard.createCursorKeys();
-    }
 }
 
 Player.prototype.update = function() {
