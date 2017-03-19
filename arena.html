@@ -23,13 +23,11 @@ const down = 19;
 const frame_w = 24;
 const frame_h = 32;
 const body_w = 10;
-const body_h = 16;
+const body_h = 20;
 const offset_x = frame_w / 4 + 1;
-const offset_y = frame_h / 2;
+const offset_y = frame_h / 4;
 const slash_side_w = 10;
 const slash_side_h = 15;
-/*const slash_side_w = 50;
-const slash_side_h = 50;*/
 
 var game = new Phaser.Game(500, 500, Phaser.AUTO, '', { preload: preload, create: create, update: update , render: render});
 
@@ -53,6 +51,7 @@ var hitbox11;
 
 function create() {
 	game.physics.startSystem(Phaser.Physics.ARCADE);
+	//game.stage.backgroundColor = 'rgb(255, 255, 255)';
 	game.add.sprite(0, 0, 'background');
 
 	// The player 1 and its settings
@@ -80,7 +79,7 @@ function create() {
 	direction1 = 'down';
 	// player stats
 	player1.hp = 5;
-	player1.delay = 0;
+	player1.delay = false;
 	// Change body size for battle
 	player1.body.setSize(body_w, body_h, offset_x, offset_y);
 	// Enable hitboxes
@@ -88,16 +87,16 @@ function create() {
 	hitboxes1.enableBody = true;
 	player1.addChild(hitboxes1);
   hitbox11 = hitboxes1.create(0,0,null);
-  hitbox11.body.setSize(slash_side_w, slash_side_h, - player1.body.width/2, 0);
+  hitbox11.body.setSize(slash_side_w, slash_side_h, - player1.body.width * 0.5, player1.body.height * 0.25);
   hitbox11.name = "slash_left";
   hitbox12 = hitboxes1.create(0,0,null);
-  hitbox12.body.setSize(slash_side_w, slash_side_h, player1.body.width/2, 0);
+  hitbox12.body.setSize(slash_side_w, slash_side_h, player1.body.width * 0.5, player1.body.height * 0.25);
   hitbox12.name = "slash_right";
   hitbox13 = hitboxes1.create(0,0,null);
-  hitbox13.body.setSize(slash_side_h, slash_side_w, 0, - player1.body.height/2);
+  hitbox13.body.setSize(slash_side_h, slash_side_w, - player1.body.width * 0.50, - player1.body.height/2);
   hitbox13.name = "slash_up";
   hitbox14 = hitboxes1.create(0,0,null);
-  hitbox14.body.setSize(slash_side_h, slash_side_w, 0, player1.body.height/2);
+  hitbox14.body.setSize(slash_side_h, slash_side_w, 0, player1.body.height * 0.75);
   hitbox14.name = "slash_down";
 	disableAllHitboxes(hitboxes1);
 
@@ -121,7 +120,7 @@ function create() {
 	direction2 = 'down';
 	// player stats
 	player2.hp = 5;
-	player2.delay = 0;
+	player2.delay = false;
 	// Change body size for battle
 	player2.body.setSize(body_w, body_h, offset_x, offset_y);
 	// Enable hitboxes
@@ -129,24 +128,21 @@ function create() {
 	hitboxes2.enableBody = true;
 	player2.addChild(hitboxes2);
   hitbox21 = hitboxes2.create(0,0,null);
-  hitbox21.body.setSize(slash_side_w, slash_side_h, - player2.body.width/2, 0);
+  hitbox21.body.setSize(slash_side_w, slash_side_h, - player2.body.width/2, player2.body.height * 0.25);
   hitbox21.name = "slash_left";
   hitbox22 = hitboxes2.create(0,0,null);
-  hitbox22.body.setSize(slash_side_w, slash_side_h, player2.body.width/2, 0);
+  hitbox22.body.setSize(slash_side_w, slash_side_h, player2.body.width/2, player2.body.height * 0.25);
   hitbox22.name = "slash_right";
   hitbox23 = hitboxes2.create(0,0,null);
   hitbox23.body.setSize(slash_side_h, slash_side_w, 0, - player2.body.height/2);
   hitbox23.name = "slash_up";
   hitbox24 = hitboxes2.create(0,0,null);
-  hitbox24.body.setSize(slash_side_h, slash_side_w, 0, player2.body.height/2);
+  hitbox24.body.setSize(slash_side_h, slash_side_w, 0, player2.body.height);
   hitbox24.name = "slash_down";
 	disableAllHitboxes(hitboxes2);
 }
 
 function update() {
-	game.physics.arcade.collide(player1, player2);
-	game.physics.arcade.overlap(player2, hitboxes1, knockback, null, this);
-	game.physics.arcade.overlap(player1, hitboxes2, knockback, null, this);
 
 	if (hit1.isDown) {
 		enableHitbox(player1, hitboxes1, attack(player1, direction1, hitboxes1));
@@ -155,10 +151,18 @@ function update() {
 		enableHitbox(player2, hitboxes2, attack(player2, direction2, hitboxes2));
 	}
 
+	game.physics.arcade.collide(player1, player2);
+	game.physics.arcade.overlap(player2, hitboxes1, knockback, null, this);
+	game.physics.arcade.overlap(player1, hitboxes2, knockback, null, this);
+
 	direction1 = animate(player1, cursors1, hit1, direction1, hitboxes1);
+
 	direction2 = animate(player2, cursors2, hit2, direction2, hitboxes2);
 
-	game.debug.body(hitbox11);
+	disableAllHitboxes(hitboxes1);
+	disableAllHitboxes(hitboxes2);
+
+	/*game.debug.body(hitbox11);
 	game.debug.body(hitbox12);
 	game.debug.body(hitbox13);
 	game.debug.body(hitbox14);
@@ -166,67 +170,69 @@ function update() {
 	game.debug.body(hitbox22);
 	game.debug.body(hitbox23);
 	game.debug.body(hitbox24);
-	//game.debug.body(player1);
-	//game.debug.body(player2);
+	game.debug.body(player1);
+	game.debug.body(player2);*/
 
 }
 
-function render() {
-    this.game.debug.text(`Debugging Phaser ${Phaser.VERSION}`, 20, 20, 'red', 'Segoe UI');
-}
+function render() { }
 
 function animate(player, cursors, hit, direction, hitboxes) {
 	//  Reset the players velocity (movement)
 	player.body.velocity.x = 0; //
 	player.body.velocity.y = 0;
 
-	if (cursors.left.isDown)
+	if (!hit.isDown)
 	{
-			//  Move to the left
-			player.body.velocity.x = - velocity;
-			player.animations.play('left');
-			direction = 'left';
-	}
-	else if (cursors.right.isDown)
-	{
+		if (cursors.left.isDown)
+		{
+				//  Move to the left
+				player.body.velocity.x = - velocity;
+				player.animations.play('left');
+				direction = 'left';
+		}
+		else if (cursors.right.isDown)
+		{
+				//  Move to the right
+				player.body.velocity.x = velocity;
+				player.animations.play('right');
+				direction = 'right';
+		}
+		if (cursors.up.isDown)
+		{
 			//  Move to the right
-			player.body.velocity.x = velocity;
-			player.animations.play('right');
-			direction = 'right';
-	}
-	if (cursors.up.isDown)
-	{
-		//  Move to the right
-		player.body.velocity.y = - velocity;
-		player.animations.play('up');
-		direction = 'up';
-	}
-	else if (cursors.down.isDown)
-	{
-		//  Move to the right
-		player.body.velocity.y = velocity;
-		player.animations.play('down');
-		direction = 'down';
-	}
+			player.body.velocity.y = - velocity;
+			player.animations.play('up');
+			direction = 'up';
+		}
+		else if (cursors.down.isDown)
+		{
+			//  Move to the right
+			player.body.velocity.y = velocity;
+			player.animations.play('down');
+			direction = 'down';
+		}
 
-	if (player.animations.currentAnim.isFinished)
-	{
-		//  Stand still
-		player.animations.stop();
-		if (direction == 'left') {
-			player.frame = left;
-		}
-		else if (direction == 'right') {
-			player.frame = right;
-		}
-		else if (direction == 'up') {
-			player.frame = up;
-		}
-		else if (direction == 'down') {
-			player.frame = down;
+		//if (player.animations.currentAnim.isFinished)
+		if (isIdle(player, cursors))
+		{
+			//  Stand still
+			player.animations.stop();
+			if (direction == 'left') {
+				player.frame = left;
+			}
+			else if (direction == 'right') {
+				player.frame = right;
+			}
+			else if (direction == 'up') {
+				player.frame = up;
+			}
+			else if (direction == 'down') {
+				player.frame = down;
+			}
 		}
 	}
-	return direction;
+		return direction;
 }
 
 function attack(player, direction, hitboxes) {
@@ -248,8 +254,9 @@ function attack(player, direction, hitboxes) {
 		player.animations.play('f_down');
 		slash = "slash_down";
 	}
+	//disableAllHitboxes(hitboxes);
 	return slash;
-	disableAllHitboxes(hitboxes);
+	//disableAllHitboxes(hitboxes);
 }
 
 function isAttacking(player) {
@@ -270,9 +277,9 @@ function isAttacking(player) {
 	}
 }
 
-function isIdle(player, cursors, hit) {
-	if (cursors.left.isDown || cursors.right.isDown || cursors.up.isDown || cursors.down.isDown || isAttacking(player)) {
-		return true;
+function isIdle(player, cursors) {
+	if (cursors.left.isDown || cursors.right.isDown || cursors.up.isDown || cursors.down.isDown) {
+		return false;
 	}
 	else {
 		return true;
@@ -287,6 +294,7 @@ function enableHitbox(player, hitboxes, hitboxName)
     // if we find the hitbox with the "name" specified
     if(hitboxes.children[i].name === hitboxName){
       // reset it
+			hitboxes.children[i].enable = true;
       hitboxes.children[i].reset(player.body.x,player.body.y);
 			box = hitboxes.children[i];
     }
@@ -304,27 +312,30 @@ function disableAllHitboxes(hitboxes)
     hitbox.kill();
   });*/
 	for (var i = 0; i < hitboxes.children.length; i++){
-    hitboxes.children[i].kill()
+		hitboxes.children[i].enable = false;
+    hitboxes.children[i].kill();
   }
 }
 
 function knockback(player, hitboxes)
 {
-	//player.body.x -= player.body.overlapX * 10;
-	player.hp--;
-	if (player.hp < 1) {
-		player.kill();
-	}
-	else {
-		player.body.enable = false;
-		player.tint = 0xff0000;
-		this.game.time.events.add(Phaser.Timer.SECOND * 2, reenable, this, player);
+	if (player.delay == false)
+	{
+		player.delay = true;
+		player.hp--;
+		if (player.hp < 1) {
+			player.kill();
+		}
+		else {
+			player.tint = 0xff0000;
+			this.game.time.events.add(Phaser.Timer.SECOND * 2, reenable, this, player);
+		}
 	}
 }
 
 function reenable(player)
 {
-	player.body.enable = true;
+	player.delay = false;
 	player.tint = 0xffffff;
 }
 
