@@ -16,6 +16,7 @@
 
 const default_position = 19;
 const velocity = 100;
+const knock_back = 20;
 const left = 28;
 const right = 10;
 const up = 1;
@@ -40,11 +41,9 @@ function preload() {
 var player1;
 var cursors1;
 var hit1;
-var direction1;
 
 var player2;
 var cursors2;
-var direction2;
 var hit2;
 
 var hitbox11;
@@ -76,7 +75,7 @@ function create() {
 	  right: game.input.keyboard.addKey(Phaser.Keyboard.D),
 	};
 	hit1 = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-	direction1 = 'down';
+	player1.direction = 'down';
 	// player stats
 	player1.hp = 5;
 	player1.delay = false;
@@ -117,7 +116,7 @@ function create() {
 	// Controls
 	cursors2 = game.input.keyboard.createCursorKeys();
 	hit2 = game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
-	direction2 = 'down';
+	player2.direction = 'down';
 	// player stats
 	player2.hp = 5;
 	player2.delay = false;
@@ -145,24 +144,30 @@ function create() {
 function update() {
 
 	if (hit1.isDown) {
-		enableHitbox(player1, hitboxes1, attack(player1, direction1, hitboxes1));
+		enableHitbox(player1, hitboxes1, attack(player1, hitboxes1));
 	}
 	if (hit2.isDown) {
-		enableHitbox(player2, hitboxes2, attack(player2, direction2, hitboxes2));
+		enableHitbox(player2, hitboxes2, attack(player2, hitboxes2));
 	}
 
 	game.physics.arcade.collide(player1, player2);
 	game.physics.arcade.overlap(player2, hitboxes1, knockback, null, this);
 	game.physics.arcade.overlap(player1, hitboxes2, knockback, null, this);
 
-	direction1 = animate(player1, cursors1, hit1, direction1, hitboxes1);
-
-	direction2 = animate(player2, cursors2, hit2, direction2, hitboxes2);
+	move(player1, cursors1, hit1, hitboxes1);
+	move(player2, cursors2, hit2, hitboxes2);
 
 	disableAllHitboxes(hitboxes1);
 	disableAllHitboxes(hitboxes2);
 
-	/*game.debug.body(hitbox11);
+	//hitbox_debug();
+
+}
+
+function render() { }
+
+function hitbox_debug() {
+	game.debug.body(hitbox11);
 	game.debug.body(hitbox12);
 	game.debug.body(hitbox13);
 	game.debug.body(hitbox14);
@@ -171,13 +176,10 @@ function update() {
 	game.debug.body(hitbox23);
 	game.debug.body(hitbox24);
 	game.debug.body(player1);
-	game.debug.body(player2);*/
-
+	game.debug.body(player2);
 }
 
-function render() { }
-
-function animate(player, cursors, hit, direction, hitboxes) {
+function move(player, cursors, hit, hitboxes) {
 	//  Reset the players velocity (movement)
 	player.body.velocity.x = 0; //
 	player.body.velocity.y = 0;
@@ -189,28 +191,28 @@ function animate(player, cursors, hit, direction, hitboxes) {
 				//  Move to the left
 				player.body.velocity.x = - velocity;
 				player.animations.play('left');
-				direction = 'left';
+				player.direction = 'left';
 		}
 		else if (cursors.right.isDown)
 		{
 				//  Move to the right
 				player.body.velocity.x = velocity;
 				player.animations.play('right');
-				direction = 'right';
+				player.direction = 'right';
 		}
 		if (cursors.up.isDown)
 		{
 			//  Move to the right
 			player.body.velocity.y = - velocity;
 			player.animations.play('up');
-			direction = 'up';
+			player.direction = 'up';
 		}
 		else if (cursors.down.isDown)
 		{
 			//  Move to the right
 			player.body.velocity.y = velocity;
 			player.animations.play('down');
-			direction = 'down';
+			player.direction = 'down';
 		}
 
 		//if (player.animations.currentAnim.isFinished)
@@ -218,45 +220,42 @@ function animate(player, cursors, hit, direction, hitboxes) {
 		{
 			//  Stand still
 			player.animations.stop();
-			if (direction == 'left') {
+			if (player.direction == 'left') {
 				player.frame = left;
 			}
-			else if (direction == 'right') {
+			else if (player.direction == 'right') {
 				player.frame = right;
 			}
-			else if (direction == 'up') {
+			else if (player.direction == 'up') {
 				player.frame = up;
 			}
-			else if (direction == 'down') {
+			else if (player.direction == 'down') {
 				player.frame = down;
 			}
 		}
 	}
-		return direction;
 }
 
-function attack(player, direction, hitboxes) {
+function attack(player, hitboxes) {
 	var slash;
-	if (direction == 'left') {
+	if (player.direction == 'left') {
 		player.animations.play('f_left');
 		slash =  "slash_left";
 	}
-	else if (direction == 'right') {
+	else if (player.direction == 'right') {
 		player.animations.play('f_right');
 		//enableHitbox(player, hitboxes, "slash_right");
 		slash = "slash_right";
 	}
-	else if (direction == 'up') {
+	else if (player.direction == 'up') {
 		player.animations.play('f_up');
 		slash = "slash_up";
 	}
-	else /*if (direction == 'down')*/ {
+	else{
 		player.animations.play('f_down');
 		slash = "slash_down";
 	}
-	//disableAllHitboxes(hitboxes);
 	return slash;
-	//disableAllHitboxes(hitboxes);
 }
 
 function isAttacking(player) {
@@ -294,27 +293,22 @@ function enableHitbox(player, hitboxes, hitboxName)
     // if we find the hitbox with the "name" specified
     if(hitboxes.children[i].name === hitboxName){
       // reset it
-			hitboxes.children[i].enable = true;
+			//hitboxes.children[i].enable = true;
       hitboxes.children[i].reset(player.body.x,player.body.y);
-			box = hitboxes.children[i];
     }
   }
-	this.game.debug.start(20, 20, 'blue');
-	this.game.debug.line();
-	this.game.debug.line('Enabling HitBox');
-	this.game.debug.stop();
 }
 
 // disable all active hitboxes
 function disableAllHitboxes(hitboxes)
 {
-  /*hitboxes.forEachExists(function(hitbox) {
+  hitboxes.forEachExists(function(hitbox) {
     hitbox.kill();
-  });*/
-	for (var i = 0; i < hitboxes.children.length; i++){
+  });
+	/*for (var i = 0; i < hitboxes.children.length; i++){
 		hitboxes.children[i].enable = false;
     hitboxes.children[i].kill();
-  }
+  }*/
 }
 
 function knockback(player, hitboxes)
@@ -328,7 +322,26 @@ function knockback(player, hitboxes)
 		}
 		else {
 			player.tint = 0xff0000;
+			var direction = hitboxes.parent.direction;
+			if (direction == 'left') {
+				//player.body.velocity.x = - 100;
+				player.body.x -= knock_back;
+			}
+			if (direction == 'right') {
+				//player.body.velocity.x = 100;
+				player.body.x += knock_back;
+			}
+			if (direction == 'up') {
+			 	//player.body.velocity.y = - 100;
+				player.body.y -= knock_back;
+			}
+			if (direction == 'down') {
+				//player.body.velocity.y = 100;
+				player.body.y += knock_back;
+			}
 			this.game.time.events.add(Phaser.Timer.SECOND * 2, reenable, this, player);
+			this.game.debug.start(20, 20, 'blue');
+			this.game.debug.line('Value is ' + direction);
 		}
 	}
 }
