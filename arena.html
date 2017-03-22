@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8" />
 	<title>Arena</title>
-    <script src="//cdn.jsdelivr.net/phaser/2.2.2/phaser.min.js"></script>
+    <script src="js/phaser.min.js"></script>
     <style type="text/css">
         body {
             margin: 0;
@@ -100,7 +100,7 @@ function create() {
 	disableAllHitboxes(hitboxes1);
 
 	// The player 2 and its settings
-	player2 = game.add.sprite(game.world.width * 0.25, game.world.height * 0.5, 'fighter', down);
+	player2 = game.add.sprite(game.world.width * 0.75, game.world.height * 0.75, 'fighter', down);
 	//  We need to enable physics on the player
 	game.physics.arcade.enable(player2);
 	player2.body.collideWorldBounds = true; //
@@ -186,7 +186,44 @@ function move(player, cursors, hit, hitboxes) {
 
 	if (!hit.isDown)
 	{
-		if (cursors.left.isDown)
+
+		if (cursors.left.isDown && cursors.down.isDown)
+		{
+				//  Move to the left
+				player.body.velocity.x = - velocity  * 0.75;
+				player.body.velocity.y = velocity  * 0.75;
+				player.animations.play('down');
+				player.direction = 'down';
+		}
+
+		else if (cursors.right.isDown && cursors.down.isDown)
+		{
+				//  Move to the left
+				player.body.velocity.x = velocity * 0.75;
+				player.body.velocity.y = velocity * 0.75;
+				player.animations.play('down');
+				player.direction = 'down';
+		}
+
+		else if (cursors.left.isDown && cursors.up.isDown)
+		{
+				//  Move to the left
+				player.body.velocity.x = - velocity * 0.75;
+				player.body.velocity.y = - velocity * 0.75;
+				player.animations.play('up');
+				player.direction = 'up';
+		}
+
+		else if (cursors.right.isDown && cursors.up.isDown)
+		{
+				//  Move to the left
+				player.body.velocity.x = velocity * 0.75;
+				player.body.velocity.y = - velocity * 0.75;
+				player.animations.play('up');
+				player.direction = 'up';
+		}
+
+		else if (cursors.left.isDown)
 		{
 				//  Move to the left
 				player.body.velocity.x = - velocity;
@@ -200,7 +237,7 @@ function move(player, cursors, hit, hitboxes) {
 				player.animations.play('right');
 				player.direction = 'right';
 		}
-		if (cursors.up.isDown)
+		else if (cursors.up.isDown)
 		{
 			//  Move to the right
 			player.body.velocity.y = - velocity;
@@ -216,7 +253,7 @@ function move(player, cursors, hit, hitboxes) {
 		}
 
 		//if (player.animations.currentAnim.isFinished)
-		if (isIdle(player, cursors))
+		else if (isIdle(player, cursors))
 		{
 			//  Stand still
 			player.animations.stop();
