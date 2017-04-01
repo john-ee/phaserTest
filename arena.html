@@ -34,7 +34,8 @@ var game = new Phaser.Game(500, 500, Phaser.AUTO, '', { preload: preload, create
 
 function preload() {
 	game.load.image('background', 'assets/background.png');
-	game.load.spritesheet('fighter', 'assets/Clive2.png', frame_w, frame_h);
+	game.load.spritesheet('fighter1', 'assets/Clive2.png', frame_w, frame_h);
+	game.load.spritesheet('fighter2', 'assets/Clive.png', frame_w, frame_h);
 	//game.load.image('energy_ball', 'assets/energy-bullet.png');
 }
 
@@ -54,7 +55,7 @@ function create() {
 	game.add.sprite(0, 0, 'background');
 
 	// The player 1 and its settings
-	player1 = game.add.sprite(game.world.width * 0.25, game.world.height * 0.25, 'fighter', down);
+	player1 = game.add.sprite(game.world.width * 0.25, game.world.height * 0.25, 'fighter1', down);
 	//  We need to enable physics on the player
 	game.physics.arcade.enable(player1);
 	player1.body.collideWorldBounds = true; //
@@ -84,6 +85,7 @@ function create() {
 	// Enable hitboxes
 	hitboxes1 = game.add.group();
 	hitboxes1.enableBody = true;
+	hitboxes1.direction = 'down';
 	player1.addChild(hitboxes1);
   hitbox11 = hitboxes1.create(0,0,null);
   hitbox11.body.setSize(slash_side_w, slash_side_h, - player1.body.width * 0.5, player1.body.height * 0.25);
@@ -100,7 +102,7 @@ function create() {
 	disableAllHitboxes(hitboxes1);
 
 	// The player 2 and its settings
-	player2 = game.add.sprite(game.world.width * 0.75, game.world.height * 0.75, 'fighter', down);
+	player2 = game.add.sprite(game.world.width * 0.75, game.world.height * 0.75, 'fighter2', down);
 	//  We need to enable physics on the player
 	game.physics.arcade.enable(player2);
 	player2.body.collideWorldBounds = true; //
@@ -125,6 +127,7 @@ function create() {
 	// Enable hitboxes
 	hitboxes2 = game.add.group();
 	hitboxes2.enableBody = true;
+	hitboxes2.direction = 'down';
 	player2.addChild(hitboxes2);
   hitbox21 = hitboxes2.create(0,0,null);
   hitbox21.body.setSize(slash_side_w, slash_side_h, - player2.body.width/2, player2.body.height * 0.25);
@@ -154,13 +157,16 @@ function update() {
 	game.physics.arcade.overlap(player2, hitboxes1, knockback, null, this);
 	game.physics.arcade.overlap(player1, hitboxes2, knockback, null, this);
 
-	move(player1, cursors1, hit1, hitboxes1);
-	move(player2, cursors2, hit2, hitboxes2);
+	hitboxes1.direction = move(player1, cursors1, hit1);
+	hitboxes2.direction = move(player2, cursors2, hit2);
 
 	disableAllHitboxes(hitboxes1);
 	disableAllHitboxes(hitboxes2);
 
 	//hitbox_debug();
+
+	this.game.debug.start(20, 40, 'blue');
+	this.game.debug.line('Value is ' + hitboxes1.direction);
 
 }
 
@@ -179,7 +185,7 @@ function hitbox_debug() {
 	game.debug.body(player2);
 }
 
-function move(player, cursors, hit, hitboxes) {
+function move(player, cursors, hit) {
 	//  Reset the players velocity (movement)
 	player.body.velocity.x = 0; //
 	player.body.velocity.y = 0;
@@ -271,6 +277,7 @@ function move(player, cursors, hit, hitboxes) {
 			}
 		}
 	}
+	return player.direction;
 }
 
 function attack(player, hitboxes) {
@@ -359,26 +366,25 @@ function knockback(player, hitboxes)
 		}
 		else {
 			player.tint = 0xff0000;
-			var direction = hitboxes.parent.direction;
-			if (direction == 'left') {
+			if (hitboxes.direction == 'left') {
 				//player.body.velocity.x = - 100;
 				player.body.x -= knock_back;
 			}
-			if (direction == 'right') {
+			if (hitboxes.direction == 'right') {
 				//player.body.velocity.x = 100;
 				player.body.x += knock_back;
 			}
-			if (direction == 'up') {
+			if (hitboxes.direction == 'up') {
 			 	//player.body.velocity.y = - 100;
 				player.body.y -= knock_back;
 			}
-			if (direction == 'down') {
+			if (hitboxes.direction == 'down') {
 				//player.body.velocity.y = 100;
 				player.body.y += knock_back;
 			}
 			this.game.time.events.add(Phaser.Timer.SECOND * 2, reenable, this, player);
 			this.game.debug.start(20, 20, 'blue');
-			this.game.debug.line('Value is ' + direction);
+			this.game.debug.line('Value is ' + hitboxes.direction);
 		}
 	}
 }
